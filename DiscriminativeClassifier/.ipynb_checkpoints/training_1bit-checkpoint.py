@@ -84,7 +84,8 @@ print("Size of label vocab:",len(LABEL.vocab))
 TEXT.vocab.freqs.most_common(10)
 
 # Creating GPU variable
-device = torch.device("cuda")
+#device = torch.device("cuda")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 Sent_SIZE=32
 print("Batch size initialized")
@@ -128,7 +129,7 @@ criterion = nn.CrossEntropyLoss()
 
 print(torch.cuda.is_available())
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(),lr=1e-3)
 #criterion = nn.BCELoss()
@@ -237,7 +238,7 @@ def infer(model, iterator, criterion):
 test_fields = [("label", LABEL), ("text", TEXT)]
 test_data = data.TabularDataset(path=cleaned_test_file, format="csv", fields=test_fields, skip_header=True)
 
-EPOCH_NUMBER = 2
+EPOCH_NUMBER = 60
 print("total number of epoch:",EPOCH_NUMBER)
 for epoch in range(1,EPOCH_NUMBER+1):
     
