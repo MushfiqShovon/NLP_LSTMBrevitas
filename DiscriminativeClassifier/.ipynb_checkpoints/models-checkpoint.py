@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.utils.rnn
 import brevitas.nn as qnn
 
-from brevitas.quant import Int8WeightPerTensorFixedPoint, Int8ActPerTensorFixedPoint, SignedBinaryWeightPerTensorConst, SignedBinaryActPerTensorConst, SignedTernaryWeightPerTensorConst, SignedTernaryActPerTensorConst
+from brevitas.quant import Int8WeightPerTensorFixedPoint, Int8ActPerTensorFixedPoint, SignedBinaryWeightPerTensorConst, SignedBinaryActPerTensorConst, SignedTernaryWeightPerTensorConst, SignedTernaryActPerTensorConst, Uint8ActPerTensorFixedPoint
 
 #Class for full precision Model
 class LSTMNet(nn.Module):
@@ -54,8 +54,14 @@ class QLSTM(nn.Module):
             bidirectional=bidirectional, 
             weight_bit_width=bit_witdh,
             io_bit_width=bit_witdh,
+            gate_acc_bit_width=bit_witdh,
+            sigmoid_bit_width=bit_witdh,
+            tanh_bit_width=bit_witdh,
             weight_quant = Int8WeightPerTensorFixedPoint, 
             io_quant = Int8ActPerTensorFixedPoint,
+            gate_acc_quant=Int8ActPerTensorFixedPoint,
+            sigmoid_quant=Uint8ActPerTensorFixedPoint,
+            tanh_quant=Int8ActPerTensorFixedPoint,
             return_quant_tensor=True,
             batch_first=True)
 
