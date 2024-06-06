@@ -18,7 +18,7 @@ print(site.getsitepackages())
 import os
 os.environ['SP_DIR'] = '/opt/conda/lib/python3.11/site-packages'
 
-
+accuracies = []
 
 # nlp library of Pytorch
 from torchtext import data
@@ -237,7 +237,14 @@ def infer(model, iterator, criterion):
 test_fields = [("label", LABEL), ("text", TEXT)]
 test_data = data.TabularDataset(path=cleaned_test_file, format="csv", fields=test_fields, skip_header=True)
 
-EPOCH_NUMBER = 60
+# Directory name variable
+MODEL_DIR = 'ModelParameter_FP'
+
+# Create the directory if it doesn't exist
+if not os.path.exists(MODEL_DIR):
+    os.makedirs(MODEL_DIR)
+
+EPOCH_NUMBER = 5
 print("total number of epoch:",EPOCH_NUMBER)
 for epoch in range(1,EPOCH_NUMBER+1):
     
@@ -259,13 +266,21 @@ for epoch in range(1,EPOCH_NUMBER+1):
     print(f'\tTime taken for epoch: {epoch_duration:.2f} seconds\n')
     print()
     
-    epoch_save_path = f'./ModelParameter_FP/model_epoch_{epoch}.pth'
+    epoch_save_path = f'./{MODEL_DIR}/model_epoch_{epoch}.pth'
     torch.save(model.state_dict(), epoch_save_path)
     print(f'Model parameters saved for epoch {epoch} at "{epoch_save_path}"')
+    
+    accuracies.append({'Epoch': epoch, 'Train Accuracy': train_acc, 'Validation Accuracy': valid_acc, 'Epoch Time': epoch_duration})
 
 test_loss, test_acc = infer(model, test_iterator, criterion)
 print(f'\t Test. Loss: {test_loss:.3f} |  Test. Acc: {test_acc*100:.2f}%')
 
+accuracies.append({'Epoch': 'Test', 'Train Accuracy': None, 'Validation Accuracy': None, 'Epoch Time': None, 'Test Accuracy': test_acc})
+df_accuracies = pd.DataFrame(accuracies)
+accuracy_save_path = f'./{MODEL_DIR}/accuracies.csv'
+df_accuracies.to_csv(accuracy_save_path, index=False)
+print(f'Accuracies saved at "{accuracy_save_path}"')
+
 model_parameters = model.state_dict()
 print(model_parameters)
-torch.save(model.state_dict(), './modelParameter_FP.pth')
+torch.save(model.state_dict(), f'./{MODEL_DIR}/modelParameter_FP.pth')
