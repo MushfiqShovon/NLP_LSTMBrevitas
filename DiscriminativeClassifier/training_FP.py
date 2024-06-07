@@ -10,8 +10,21 @@ import torch.optim as optim
 import torchtext
 print(torchtext.__version__)
 import time
+import argparse
 
-from models import LSTMNet
+# Argument parsing
+parser = argparse.ArgumentParser(description="Training script")
+
+parser.add_argument('--epochs', type=int, default=100, help='number of epochs')
+parser.add_argument('--bit_width', type=int, default=8, help='bit width for quantization')
+parser.add_argument('--model', type=str, default='LSTMNet', choices=['LSTMNet', 'QLSTM', 'QLSTM_2bit', 'QLSTM_1bit'], help='model class to use')
+
+args = parser.parse_args()
+
+# Set the number of epochs from command line arguments
+EPOCH_NUMBER = args.epochs
+
+from models import LSTMNet, QLSTM, QLSTM_2bit, QLSTM_1bit 
 
 import site
 print(site.getsitepackages())
@@ -121,18 +134,29 @@ NUM_OUTPUT_NODES = len(LABEL.vocab)
 NUM_LAYERS = 1
 BIDIRECTION = False
 DROPOUT = 0.2
-BIT_WIDTH = 32
+BIT_WIDTH = args.bit_width
 
-model = LSTMNet(SIZE_OF_VOCAB, EMBEDDING_DIM, NUM_HIDDEN_NODES, NUM_OUTPUT_NODES, NUM_LAYERS, BIDIRECTION, DROPOUT, BIT_WIDTH)
+#Model creation and model directory for savings the checkpoint files and accuracy result
+
+if args.model == 'LSTMNet':
+    model = LSTMNet(SIZE_OF_VOCAB, EMBEDDING_DIM, NUM_HIDDEN_NODES, NUM_OUTPUT_NODES, NUM_LAYERS, BIDIRECTION, DROPOUT, BIT_WIDTH)
+    MODEL_DIR = 'ModelParameterDisc/ModelParameter_LSTM_FP'
+elif args.model == 'QLSTM':
+    model = QLSTM(SIZE_OF_VOCAB, EMBEDDING_DIM, NUM_HIDDEN_NODES, NUM_OUTPUT_NODES, NUM_LAYERS, BIDIRECTION, DROPOUT, BIT_WIDTH)
+    MODEL_DIR = f'ModelParameterDisc/ModelParameter_LSTM_{BIT_WIDTH}bit'
+elif args.model == 'QLSTM_1bit':
+    model = QLSTM_1bit(SIZE_OF_VOCAB, EMBEDDING_DIM, NUM_HIDDEN_NODES, NUM_OUTPUT_NODES, NUM_LAYERS, BIDIRECTION, DROPOUT, BIT_WIDTH)
+    MODEL_DIR = f'ModelParameterDisc/ModelParameter_LSTM_{BIT_WIDTH}bit'
+elif args.model == 'QLSTM_2bit':
+    model = QLSTM_2bit(SIZE_OF_VOCAB, EMBEDDING_DIM, NUM_HIDDEN_NODES, NUM_OUTPUT_NODES, NUM_LAYERS, BIDIRECTION, DROPOUT, BIT_WIDTH)
+    MODEL_DIR = f'ModelParameterDisc/ModelParameter_LSTM_{BIT_WIDTH}bit'
+
 criterion = nn.CrossEntropyLoss()
-#criterion = nn.NLLLoss()
 
 print(torch.cuda.is_available())
 
 model = model.to(device)
 optimizer = optim.Adam(model.parameters(),lr=1e-3)
-#criterion = nn.BCELoss()
-#criterion = criterion.to(device)
 
 model
 
@@ -237,14 +261,11 @@ def infer(model, iterator, criterion):
 test_fields = [("label", LABEL), ("text", TEXT)]
 test_data = data.TabularDataset(path=cleaned_test_file, format="csv", fields=test_fields, skip_header=True)
 
-# Directory name variable
-MODEL_DIR = 'ModelParameter_FP'
 
 # Create the directory if it doesn't exist
 if not os.path.exists(MODEL_DIR):
     os.makedirs(MODEL_DIR)
 
-EPOCH_NUMBER = 5
 print("total number of epoch:",EPOCH_NUMBER)
 for epoch in range(1,EPOCH_NUMBER+1):
     
@@ -283,4 +304,4 @@ print(f'Accuracies saved at "{accuracy_save_path}"')
 
 model_parameters = model.state_dict()
 print(model_parameters)
-torch.save(model.state_dict(), f'./{MODEL_DIR}/modelParameter_FP.pth')
+torch.save(model.state_dict(), f'./{MODEL_DIR}/modelParameter.pth')
