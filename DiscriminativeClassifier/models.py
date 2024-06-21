@@ -45,7 +45,7 @@ class QLSTM(nn.Module):
         
         super(QLSTM,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.quantLSTM = qnn.QuantLSTM(
             input_size=embedding_dim, 
@@ -93,7 +93,7 @@ class QLSTM_1bit(nn.Module):
         
         super(QLSTM_1bit,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.quantLSTM = qnn.QuantLSTM(
             input_size=embedding_dim, 
@@ -142,7 +142,7 @@ class QLSTM_2bit(nn.Module):
         
         super(QLSTM_2bit,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.quantLSTM = qnn.QuantLSTM(
             input_size=embedding_dim, 
@@ -221,7 +221,7 @@ class QRNN(nn.Module):
         
         super(QRNN,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size, embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.qrnn = qnn.QuantRNN(
             input_size=embedding_dim, 
@@ -265,7 +265,7 @@ class QRNN_2bit(nn.Module):
         
         super(QRNN_2bit,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size, embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.qrnn = qnn.QuantRNN(
             input_size=embedding_dim, 
@@ -309,7 +309,7 @@ class QRNN_1bit(nn.Module):
         
         super(QRNN_1bit,self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+        self.embedding = qnn.QuantEmbedding(vocab_size, embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
 
         self.qrnn = qnn.QuantRNN(
             input_size=embedding_dim, 
