@@ -11,19 +11,15 @@ cd DiscriminativeClassifier
 sh Prerequisite.sh
 
 ## For running full precision model run following command in bash:
-mkdir ModelParameter_FP  
-python training_FP.py
+python train.py --model LSTMNet --epochs 100
 
-## For running 4bit quantization run following command in bash:
-mkdir ModelParameter_4bit  
-python training_4bit.py
+## For running quantization with bitwidth value above 2bit run following command in bash:  
+python train.py --model QLSTM --bit_width 8 --epochs 100
 
 
 ## For running 2bit quantization run following command in bash:
-mkdir ModelParameter_2bit  
-python training_2bit.py
+python train.py --model QLSTM_2bit --bit_width 2 --epochs 100
 
 
 ## For running 1bit quantization run following command in bash:
-mkdir ModelParameter_1bit  
-python training_1bit.py
+python train.py --model QLSTM_1bit --bit_width 1 --epochs 100
