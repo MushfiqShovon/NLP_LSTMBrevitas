@@ -93,7 +93,7 @@ class QLSTM_1bit(nn.Module):
         
         super(QLSTM_1bit,self).__init__()
         
-        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = SignedBinaryWeightPerTensorConst, weight_bit_width=bit_witdh)
 
         self.quantLSTM = qnn.QuantLSTM(
             input_size=embedding_dim, 
@@ -142,7 +142,7 @@ class QLSTM_2bit(nn.Module):
         
         super(QLSTM_2bit,self).__init__()
         
-        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = SignedTernaryWeightPerTensorConst, weight_bit_width=bit_witdh)
 
         self.quantLSTM = qnn.QuantLSTM(
             input_size=embedding_dim, 
@@ -177,6 +177,244 @@ class QLSTM_2bit(nn.Module):
         padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
         
         padded_output,(hidden_state,cell_state) = self.quantLSTM(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+class QLSTM_OnlyLSTM(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_OnlyLSTM,self).__init__()
+        
+        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+
+        self.quantLSTM = qnn.QuantLSTM(
+            input_size=embedding_dim, 
+            hidden_size=hidden_dim, 
+            num_layers=n_layers, 
+            bidirectional=bidirectional, 
+            weight_bit_width=bit_witdh,
+            io_bit_width=bit_witdh,
+            gate_acc_bit_width=bit_witdh,
+            sigmoid_bit_width=bit_witdh,
+            tanh_bit_width=bit_witdh,
+            weight_quant = Int8WeightPerTensorFixedPoint, 
+            io_quant = Int8ActPerTensorFixedPoint,
+            gate_acc_quant=Int8ActPerTensorFixedPoint,
+            sigmoid_quant=Uint8ActPerTensorFixedPoint,
+            tanh_quant=Int8ActPerTensorFixedPoint,
+            return_quant_tensor=True,
+            batch_first=True)
+
+        
+        self.fc = nn.Linear(hidden_dim, output_dim, bias=False)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.quantLSTM(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+
+#Class for Brevitas Quantization model with 1bit (QAT)
+class QLSTM_OnlyLSTM_1bit(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_OnlyLSTM_1bit,self).__init__()
+        
+        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+
+        self.quantLSTM = qnn.QuantLSTM(
+            input_size=embedding_dim, 
+            hidden_size=hidden_dim, 
+            num_layers=n_layers, 
+            bidirectional=bidirectional, 
+            weight_bit_width=bit_witdh,
+            io_bit_width=bit_witdh,
+            gate_acc_bit_width=bit_witdh,
+            sigmoid_bit_width=bit_witdh,
+            tanh_bit_width=bit_witdh,
+            weight_quant = SignedBinaryWeightPerTensorConst, 
+            io_quant = SignedBinaryActPerTensorConst,
+            gate_acc_quant=SignedBinaryActPerTensorConst,
+            sigmoid_quant=SignedBinaryActPerTensorConst,
+            tanh_quant=SignedBinaryActPerTensorConst,
+            return_quant_tensor=True,
+            batch_first=True)
+
+        
+        self.fc = nn.Linear(hidden_dim, output_dim, bias=False)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.quantLSTM(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+
+#Class for Brevitas Quantization model with 2bit (QAT)
+class QLSTM_OnlyLSTM_2bit(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_OnlyLSTM_2bit,self).__init__()
+        
+        self.embedding = nn.Embedding(vocab_size,embedding_dim)
+
+        self.quantLSTM = qnn.QuantLSTM(
+            input_size=embedding_dim, 
+            hidden_size=hidden_dim, 
+            num_layers=n_layers, 
+            bidirectional=bidirectional, 
+            weight_bit_width=bit_witdh,
+            io_bit_width=bit_witdh,
+            gate_acc_bit_width=bit_witdh,
+            sigmoid_bit_width=bit_witdh,
+            tanh_bit_width=bit_witdh,
+            weight_quant = SignedTernaryWeightPerTensorConst, 
+            io_quant = SignedTernaryActPerTensorConst,
+            gate_acc_quant=SignedTernaryActPerTensorConst,
+            sigmoid_quant=SignedTernaryActPerTensorConst,
+            tanh_quant=SignedTernaryActPerTensorConst,
+            return_quant_tensor=True,
+            batch_first=True)
+
+        
+        self.fc = nn.Linear(hidden_dim, output_dim, bias=False)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.quantLSTM(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+
+class QLSTM_Others(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_Others,self).__init__()
+        
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
+
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, bidirectional=bidirectional, dropout=dropout, batch_first=True)
+        
+        self.fc = qnn.QuantLinear(hidden_dim, output_dim, bias=False, weight_quant = Int8WeightPerTensorFixedPoint, weight_bit_width=bit_witdh)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.lstm(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+class QLSTM_Others_1bit(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_Others_1bit,self).__init__()
+        
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = SignedBinaryWeightPerTensorConst, weight_bit_width=bit_witdh)
+
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, bidirectional=bidirectional, dropout=dropout, batch_first=True)
+        
+        self.fc = qnn.QuantLinear(hidden_dim, output_dim, bias=False, weight_quant = SignedBinaryWeightPerTensorConst, weight_bit_width=bit_witdh)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.lstm(padded_embedded)
+
+        dense_outputs=self.fc(hidden_state)
+
+        return dense_outputs
+
+
+
+#Class for Brevitas Quantization model with 2bit (QAT)
+class QLSTM_Others_2bit(nn.Module):
+    
+    def __init__(self,vocab_size,embedding_dim,hidden_dim,output_dim,n_layers,bidirectional,dropout, bit_witdh):
+        
+        super(QLSTM_Others_2bit,self).__init__()
+        
+        self.embedding = qnn.QuantEmbedding(vocab_size,embedding_dim, weight_quant = SignedTernaryWeightPerTensorConst, weight_bit_width=bit_witdh)
+
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=n_layers, bidirectional=bidirectional, dropout=dropout, batch_first=True)
+      
+        self.fc = qnn.QuantLinear(hidden_dim, output_dim, bias=False, weight_quant = SignedTernaryWeightPerTensorConst, weight_bit_width=bit_witdh)
+        
+        self.sigmoid = nn.Sigmoid()
+        
+        
+    
+    def forward(self,text,text_lengths):
+        embedded = self.embedding(text)
+
+        
+        #packed_embedded = nn.utils.rnn.pack_padded_sequence(embedded, text_lengths.cpu(),batch_first=True)
+        padded_embedded = nn.utils.rnn.pad_sequence(embedded, batch_first=True)
+        
+        padded_output,(hidden_state,cell_state) = self.lstm(padded_embedded)
 
         dense_outputs=self.fc(hidden_state)
 
